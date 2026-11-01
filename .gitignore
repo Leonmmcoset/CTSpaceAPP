@@ -31,3 +31,6 @@ windows/flutter/ephemeral/
 
 .flutter-plugins-dependencies
 .flutter-plugins
+
+# Locally packaged binaries
+dist/
