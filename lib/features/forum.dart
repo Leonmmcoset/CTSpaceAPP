@@ -465,11 +465,11 @@ class _DiscussionPageState extends ConsumerState<DiscussionPage> {
                               context.mounted &&
                               await confirm(context, '删除这个帖子？') &&
                               context.mounted) {
-                            final result = await perform(
-                              context,
-                              () => app.api.delete('/discussions/${item.id}'),
-                            );
-                            if (result != null && context.mounted) {
+                            final result = await perform(context, () async {
+                              await app.api.delete('/discussions/${item.id}');
+                              return true;
+                            });
+                            if (result == true && context.mounted) {
                               app.changed();
                               if (widget.onClose != null)
                                 widget.onClose!();

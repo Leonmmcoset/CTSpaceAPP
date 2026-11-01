@@ -50,7 +50,9 @@ class Member {
   String get signature => textOf(raw['signature'] ?? raw['bio']);
   String get role => textOf(raw['role']);
   int get points => intOf(raw['points']);
-  int get level => intOf(raw['level']);
+  int get level => raw['level'] is Map
+      ? intOf(object(raw['level'])['level'] ?? object(raw['level'])['current'])
+      : intOf(raw['level']);
 }
 
 enum ContentKind { discussion, project, extension }
