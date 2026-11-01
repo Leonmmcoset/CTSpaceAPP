@@ -11,6 +11,7 @@ import 'features/gallery.dart';
 import 'features/social.dart';
 import 'features/settings.dart';
 import 'features/drive.dart';
+import 'features/developer.dart';
 import 'core/models.dart';
 import 'features/composer.dart';
 import 'ui/platform.dart';
@@ -89,6 +90,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/drive/share/:id',
         builder: (_, s) => DriveSharePage(shareId: s.pathParameters['id']!),
+      ),
+      GoRoute(path: '/developer', builder: (_, _) => const DeveloperPage()),
+      GoRoute(path: '/api-keys', builder: (_, _) => const ApiKeysPage()),
+      GoRoute(path: '/cloud', builder: (_, _) => const CloudProjectsPage()),
+      GoRoute(
+        path: '/cloud/:id',
+        builder: (_, s) => CloudProjectPage(id: s.pathParameters['id']!),
       ),
       GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterPage()),
