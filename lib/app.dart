@@ -8,6 +8,8 @@ import 'features/auth.dart';
 import 'features/policy.dart';
 import 'features/forum.dart';
 import 'features/gallery.dart';
+import 'features/social.dart';
+import 'features/settings.dart';
 import 'core/models.dart';
 import 'features/composer.dart';
 import 'ui/platform.dart';
@@ -54,6 +56,34 @@ final routerProvider = Provider<GoRouter>((ref) {
           kind: ContentKind.extension,
         ),
       ),
+      GoRoute(path: '/me', builder: (_, _) => const MePage()),
+      GoRoute(path: '/search', builder: (_, _) => const SearchPage()),
+      GoRoute(path: '/tags', builder: (_, _) => const TagsPage()),
+      GoRoute(
+        path: '/notifications',
+        builder: (_, _) => const NotificationsPage(),
+      ),
+      GoRoute(path: '/bookmarks', builder: (_, _) => const BookmarksPage()),
+      GoRoute(
+        path: '/leaderboard',
+        builder: (_, _) => const MembersPage(leaderboard: true),
+      ),
+      GoRoute(
+        path: '/user/:id',
+        builder: (_, s) => UserPage(id: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/user/:id/followers',
+        builder: (_, s) => MembersPage(id: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/user/:id/following',
+        builder: (_, s) =>
+            MembersPage(id: s.pathParameters['id']!, following: true),
+      ),
+      GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
+      GoRoute(path: '/security', builder: (_, _) => const SecurityPage()),
+      GoRoute(path: '/changelogs', builder: (_, _) => const ChangelogsPage()),
       GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterPage()),
       GoRoute(path: '/recover', builder: (_, _) => const RecoveryPage()),

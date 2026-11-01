@@ -608,7 +608,7 @@ class _DiscussionPageState extends ConsumerState<DiscussionPage> {
                       if (ok == true) reload();
                     }
                     if (action == 'delete' &&
-                        context.mounted &&
+                        mounted &&
                         await confirm(context, '删除回复？') &&
                         mounted) {
                       await perform(
