@@ -8,6 +8,7 @@ import '../ui/forms.dart';
 import '../ui/platform.dart';
 import '../ui/widgets.dart';
 import 'forum.dart';
+import 'decoration.dart';
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});
@@ -535,6 +536,8 @@ class MePage extends ConsumerWidget {
                 ('原创存证', Icons.verified_outlined, '/origmark'),
                 ('关注的话题', Icons.tag_rounded, '/tags'),
                 ('排行榜', Icons.leaderboard_outlined, '/leaderboard'),
+                ('装扮主页', Icons.palette_outlined, '/decoration'),
+                ('客服', Icons.support_agent_rounded, '/support'),
                 ('账号与安全', Icons.shield_outlined, '/security'),
                 ('设置', Icons.tune_rounded, '/settings'),
               ])
@@ -635,6 +638,8 @@ class _UserPageState extends ConsumerState<UserPage> {
                 SurfaceCard(
                   child: Column(
                     children: [
+                      ProfileBanner(user: user),
+                      const SizedBox(height: 20),
                       MemberAvatar(user, radius: 42),
                       const SizedBox(height: 20),
                       Text(

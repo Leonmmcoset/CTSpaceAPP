@@ -19,6 +19,7 @@ import 'features/live.dart';
 import 'features/discover.dart';
 import 'features/library.dart';
 import 'features/support.dart';
+import 'features/decoration.dart';
 import 'ui/shell.dart';
 import 'core/models.dart';
 import 'features/composer.dart';
@@ -53,7 +54,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, s) =>
                 SupportConversationPage(id: s.pathParameters['id']!),
           ),
-          
+          GoRoute(
+            path: '/decoration',
+            builder: (_, _) => const DecorationPage(),
+          ),
           GoRoute(path: '/discover', builder: (_, _) => const DiscoverPage()),
           GoRoute(path: '/finance', builder: (_, _) => const FinancePage()),
           GoRoute(path: '/', builder: (_, _) => const CommunityPage()),

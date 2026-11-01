@@ -118,6 +118,7 @@ class _AppShellState extends ConsumerState<AppShell>
       'me',
       'user',
       'settings',
+      'decoration',
       'security',
       'bookmarks',
       'orders',

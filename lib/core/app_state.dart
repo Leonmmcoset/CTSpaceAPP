@@ -11,6 +11,11 @@ final appProvider = ChangeNotifierProvider<AppState>(
 );
 final apiProvider = Provider<ApiClient>((ref) => ref.watch(appProvider).api);
 
+final decorationProvider = FutureProvider<Json>((ref) async {
+  ref.watch(appProvider.select((a) => a.user?.id));
+  return object(await ref.read(apiProvider).get('/deco/catalog'));
+});
+
 class AppState extends ChangeNotifier {
   AppState(this.store, {ApiClient? client}) : api = client ?? ApiClient() {
     api.onUnauthorized = () {

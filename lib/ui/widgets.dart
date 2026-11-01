@@ -584,39 +584,65 @@ class _SpringIconButtonState extends State<SpringIconButton>
   );
 }
 
-class MemberAvatar extends StatelessWidget {
+class MemberAvatar extends ConsumerWidget {
   const MemberAvatar(this.member, {super.key, this.radius = 19, this.onTap});
   final Member member;
   final double radius;
   final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) => InkWell(
-    borderRadius: BorderRadius.circular(radius),
-    onTap:
-        onTap ??
-        (member.id.isEmpty ? null : () => context.push('/user/${member.id}')),
-    child: ClipOval(
-      child: SizedBox.square(
-        dimension: radius * 2,
-        child: member.avatar.isEmpty
-            ? ColoredBox(
-                color: Theme.of(context).colorScheme.tertiaryContainer,
-                child: Center(
-                  child: Text(
-                    member.name.isEmpty
-                        ? '创'
-                        : String.fromCharCode(member.name.runes.first),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onTertiaryContainer,
-                      fontWeight: FontWeight.w700,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final key = textOf(member.raw['avatarFrame']);
+    final catalog = key.isEmpty
+        ? <String, dynamic>{}
+        : ref.watch(decorationProvider).valueOrNull ?? {};
+    final frame = objects(
+      catalog['frames'],
+    ).where((e) => e['key'] == key).firstOrNull;
+    final colors = (frame?['ring'] as List? ?? [])
+        .map((e) => int.tryParse(textOf(e).replaceFirst('#', ''), radix: 16))
+        .whereType<int>()
+        .map((e) => Color(0xff000000 | e))
+        .toList();
+    final avatar = InkWell(
+      borderRadius: BorderRadius.circular(radius),
+      onTap:
+          onTap ??
+          (member.id.isEmpty ? null : () => context.push('/user/${member.id}')),
+      child: ClipOval(
+        child: SizedBox.square(
+          dimension: radius * 2,
+          child: member.avatar.isEmpty
+              ? ColoredBox(
+                  color: Theme.of(context).colorScheme.tertiaryContainer,
+                  child: Center(
+                    child: Text(
+                      member.name.isEmpty
+                          ? '创'
+                          : String.fromCharCode(member.name.runes.first),
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onTertiaryContainer,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
-              )
-            : AppImage(member.avatar, fit: BoxFit.cover),
+                )
+              : AppImage(member.avatar, fit: BoxFit.cover),
+        ),
       ),
-    ),
-  );
+    );
+    return colors.length < 2
+        ? avatar
+        : Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: SweepGradient(colors: [...colors, colors.first]),
+            ),
+            child: avatar,
+          );
+  }
 }
 
 class AppImage extends StatelessWidget {
