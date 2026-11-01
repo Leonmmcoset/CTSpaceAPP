@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'features/auth.dart';
 import 'features/policy.dart';
 import 'features/forum.dart';
+import 'features/gallery.dart';
+import 'core/models.dart';
 import 'features/composer.dart';
 import 'ui/platform.dart';
 import 'core/app_state.dart';
@@ -32,6 +34,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/web',
         builder: (_, s) => WebPage(url: s.uri.queryParameters['url'] ?? ''),
+      ),
+      GoRoute(path: '/gallery', builder: (_, _) => const GalleryPage()),
+      GoRoute(
+        path: '/my-creations',
+        builder: (_, _) => const GalleryPage(mine: true),
+      ),
+      GoRoute(
+        path: '/project/:id',
+        builder: (_, s) => GalleryDetailPage(
+          id: s.pathParameters['id']!,
+          kind: ContentKind.project,
+        ),
+      ),
+      GoRoute(
+        path: '/extension/:id',
+        builder: (_, s) => GalleryDetailPage(
+          id: s.pathParameters['id']!,
+          kind: ContentKind.extension,
+        ),
       ),
       GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterPage()),
