@@ -31,10 +31,10 @@ Future<void> openLink(
       final route = switch (segments[0]) {
         'discussion' => '/discussion/${segments[1]}',
         'ts' => '/seq/${segments[1]}',
-        'project' || 'projects' => '/project/${segments[1]}',
+        'project' || 'projects' || 'works' => '/project/${segments[1]}',
         'extension' || 'extensions' => '/extension/${segments[1]}',
         'user' || 'users' => '/user/${segments[1]}',
-        'd' => '/drive/share/${segments[1]}',
+        'd' || 'c' => '/drive/share/${segments[1]}',
         _ => null,
       };
       if (route != null) {

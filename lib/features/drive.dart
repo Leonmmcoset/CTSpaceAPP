@@ -70,7 +70,7 @@ class _DrivePageState extends ConsumerState<DrivePage> {
         );
         break;
       case 'share':
-        await copyText(context, absoluteUrl('/d/${row['shareId']}'));
+        await copyText(context, absoluteUrl('/c/${row['shareId']}'));
         break;
       case 'raw':
         await copyText(
