@@ -24,6 +24,9 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
+        with:
+          # 旧版 tools 包已下线，避免 action 默认安装它。
+          packages: platform-tools
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
