@@ -42,7 +42,9 @@ class AppState extends ChangeNotifier {
   Future<void> initialize() async {
     final settingsFuture = loadSettings();
     try {
-      api.token = await store.readToken();
+      api.token = store.prefs.getBool('sessionRevoked') == true
+          ? null
+          : await store.readToken();
       if (api.token != null) {
         try {
           user = Member(object(await api.get('/auth/me')));
@@ -93,6 +95,7 @@ class AppState extends ChangeNotifier {
     if (token.isEmpty) throw const ApiFailure('登录响应异常，请重试');
     try {
       await store.writeToken(token);
+      await store.prefs.setBool('sessionRevoked', false);
     } catch (_) {
       throw const ApiFailure('系统安全存储不可用，无法保存登录状态');
     }
@@ -103,13 +106,23 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> refreshUser() async {
-    user = Member(object(await api.get('/auth/me')));
-    changed();
+    final session = api.token;
+    if (session == null) return;
+    try {
+      final result = object(await api.get('/auth/me'));
+      if (api.token != session) return;
+      user = Member(result);
+      sessionError = null;
+      changed();
+    } catch (e) {
+      sessionError = friendlyError(e);
+    }
   }
 
   Future<void> signOut() async {
     api.token = null;
     user = null;
+    await store.prefs.setBool('sessionRevoked', true);
     try {
       await store.writeToken(null);
     } catch (_) {

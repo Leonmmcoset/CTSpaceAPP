@@ -59,6 +59,7 @@ void main() {
     expect(app.api.token, isNull);
     expect(app.user, isNull);
     expect(await store.readToken(), isNull);
+    expect(store.prefs.getBool('sessionRevoked'), true);
     app.dispose();
   });
 }
