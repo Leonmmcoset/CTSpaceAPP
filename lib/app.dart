@@ -10,6 +10,7 @@ import 'features/forum.dart';
 import 'features/gallery.dart';
 import 'features/social.dart';
 import 'features/settings.dart';
+import 'features/drive.dart';
 import 'core/models.dart';
 import 'features/composer.dart';
 import 'ui/platform.dart';
@@ -84,6 +85,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
       GoRoute(path: '/security', builder: (_, _) => const SecurityPage()),
       GoRoute(path: '/changelogs', builder: (_, _) => const ChangelogsPage()),
+      GoRoute(path: '/drive', builder: (_, _) => const DrivePage()),
+      GoRoute(
+        path: '/drive/share/:id',
+        builder: (_, s) => DriveSharePage(shareId: s.pathParameters['id']!),
+      ),
       GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterPage()),
       GoRoute(path: '/recover', builder: (_, _) => const RecoveryPage()),
