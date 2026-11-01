@@ -7,7 +7,7 @@
 | 项目 | 当前适配 |
 | --- | --- |
 | API 根路径 | 默认 `https://forum.ctspace.xyz/api`；相对资源地址相对站点根目录解析 |
-| 验证码 | `{token,image,pow:{challenge,difficulty}}`；SHA-256 输入为 `challenge:nonce`，哈希十六进制前 difficulty 位为 0 |
+| 验证码 | 6 个字符；响应为 `{token,image,pow:{challenge,difficulty}}`；SHA-256 输入为 `challenge:nonce`，哈希十六进制前 difficulty 位为 0 |
 | 登录 | 兼容 `{token,user}`；返回 `needSecurityAnswer` 时使用 `/auth/login/security`，完成前不保存会话 |
 | 注册 | 官网当前基本请求为 `{username,email,password}`；邮件激活另行完成 |
 | 重发邮件 | 文档使用 `identifier`，官网使用 `email`；当前保留文档的 identifier 请求 |

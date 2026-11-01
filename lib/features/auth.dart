@@ -105,7 +105,7 @@ class CaptchaInputState extends ConsumerState<CaptchaInput> {
       TextFormField(
         controller: answer,
         textCapitalization: TextCapitalization.characters,
-        maxLength: 4,
+        maxLength: 6,
         decoration: InputDecoration(
           labelText: '验证码',
           counterText: '',
