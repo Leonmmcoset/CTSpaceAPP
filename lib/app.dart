@@ -2,8 +2,40 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:go_router/go_router.dart';
+import 'features/auth.dart';
+import 'features/policy.dart';
 import 'core/app_state.dart';
 import 'ui/theme.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final router = GoRouter(
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('创客次元')),
+          body: Center(
+            child: FilledButton(
+              onPressed: () => context.push('/login'),
+              child: const Text('登录 / 注册'),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
+      GoRoute(path: '/register', builder: (_, _) => const RegisterPage()),
+      GoRoute(path: '/recover', builder: (_, _) => const RecoveryPage()),
+      GoRoute(
+        path: '/policy/:kind',
+        builder: (_, state) => PolicyPage(kind: state.pathParameters['kind']!),
+      ),
+    ],
+  );
+  ref.onDispose(router.dispose);
+  return router;
+});
 
 class CTSpaceApp extends ConsumerWidget {
   const CTSpaceApp({super.key});
@@ -12,12 +44,15 @@ class CTSpaceApp extends ConsumerWidget {
     final state = ref.watch(appProvider);
     return DynamicColorBuilder(
       builder: (light, dark) {
-        return MaterialApp(
+        return MaterialApp.router(
           title: '创客次元',
           debugShowCheckedModeBanner: false,
           locale: const Locale('zh', 'CN'),
           supportedLocales: const [Locale('zh', 'CN')],
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          localizationsDelegates: const [
+            ...GlobalMaterialLocalizations.delegates,
+            FlutterQuillLocalizations.delegate,
+          ],
           theme: buildTheme(
             state.dynamicColor && light != null
                 ? light
@@ -36,25 +71,7 @@ class CTSpaceApp extends ConsumerWidget {
                   ),
           ),
           themeMode: state.themeMode,
-          home: Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/branding/logo.png',
-                    width: 88,
-                    height: 88,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    '创客次元',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ],
-              ),
-            ),
-          ),
+          routerConfig: ref.watch(routerProvider),
         );
       },
     );
