@@ -34,3 +34,6 @@ windows/flutter/ephemeral/
 
 # Locally packaged binaries
 dist/
+
+android/.kotlin/
+android/.gradle/
