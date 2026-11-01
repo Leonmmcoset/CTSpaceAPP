@@ -12,6 +12,7 @@ import 'features/social.dart';
 import 'features/settings.dart';
 import 'features/drive.dart';
 import 'features/developer.dart';
+import 'features/shop.dart';
 import 'core/models.dart';
 import 'features/composer.dart';
 import 'ui/platform.dart';
@@ -98,6 +99,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/cloud/:id',
         builder: (_, s) => CloudProjectPage(id: s.pathParameters['id']!),
       ),
+      GoRoute(path: '/shop', builder: (_, _) => const ShopPage()),
+      GoRoute(
+        path: '/shop/:id',
+        builder: (_, s) => ProductPage(id: s.pathParameters['id']!),
+      ),
+      GoRoute(path: '/orders', builder: (_, _) => const OrdersPage()),
+      GoRoute(path: '/addresses', builder: (_, _) => const AddressesPage()),
       GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterPage()),
       GoRoute(path: '/recover', builder: (_, _) => const RecoveryPage()),
