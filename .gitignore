@@ -28,3 +28,6 @@ macos/Pods/
 macos/Flutter/ephemeral/
 linux/flutter/ephemeral/
 windows/flutter/ephemeral/
+
+.flutter-plugins-dependencies
+.flutter-plugins
