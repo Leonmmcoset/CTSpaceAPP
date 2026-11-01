@@ -13,6 +13,7 @@ import 'features/settings.dart';
 import 'features/drive.dart';
 import 'features/developer.dart';
 import 'features/shop.dart';
+import 'features/messages.dart';
 import 'core/models.dart';
 import 'features/composer.dart';
 import 'ui/platform.dart';
@@ -106,6 +107,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/orders', builder: (_, _) => const OrdersPage()),
       GoRoute(path: '/addresses', builder: (_, _) => const AddressesPage()),
+      GoRoute(
+        path: '/messages',
+        builder: (_, s) => MessagesPage(userId: s.uri.queryParameters['user']),
+      ),
+      GoRoute(path: '/friends', builder: (_, _) => const FriendsPage()),
+      GoRoute(
+        path: '/groups/:id',
+        builder: (_, s) => GroupPage(id: s.pathParameters['id']!),
+      ),
       GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterPage()),
       GoRoute(path: '/recover', builder: (_, _) => const RecoveryPage()),
