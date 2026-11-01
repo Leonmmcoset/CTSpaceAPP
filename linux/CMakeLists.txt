@@ -79,9 +79,7 @@ include(flutter/generated_plugins.cmake)
 # By default, "installing" just makes a relocatable bundle in the build
 # directory.
 set(BUILD_BUNDLE_DIR "${PROJECT_BINARY_DIR}/bundle")
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "..." FORCE)
-endif()
+set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "Flutter bundle directory" FORCE)
 
 # Start with a clean build bundle directory every time.
 install(CODE "
@@ -126,3 +124,9 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# Branding and a desktop entry for packaging the relocatable bundle.
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/branding/app-icon.png"
+  DESTINATION "${INSTALL_BUNDLE_DATA_DIR}" RENAME "xyz.ctspace.forum.png" COMPONENT Runtime)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/xyz.ctspace.forum.desktop"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)

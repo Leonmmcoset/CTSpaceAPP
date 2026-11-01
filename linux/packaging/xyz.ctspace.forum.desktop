@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=创客次元
+Comment=创客次元社区客户端
+Exec=forum
+Icon=xyz.ctspace.forum
+Terminal=false
+Categories=Network;Chat;
+StartupWMClass=xyz.ctspace.forum
