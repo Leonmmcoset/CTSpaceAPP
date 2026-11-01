@@ -19,6 +19,13 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   final query = TextEditingController();
   Timer? timer;
   String q = '', type = 'all';
+  static const kinds = {
+    'discussions': '讨论',
+    'posts': '回复',
+    'projects': '作品',
+    'extensions': '扩展',
+    'users': '用户',
+  };
   @override
   void dispose() {
     timer?.cancel();
@@ -36,9 +43,12 @@ class _SearchPageState extends ConsumerState<SearchPage> {
           child: SearchBar(
             controller: query,
             autoFocus: true,
-            hintText: '搜索讨论、作品、扩展、用户',
+            hintText: '搜索讨论、回复、作品、用户',
             leading: const Icon(Icons.search_rounded),
-            onSubmitted: (v) => setState(() => q = v.trim()),
+            onSubmitted: (v) {
+              timer?.cancel();
+              setState(() => q = v.trim());
+            },
             onChanged: (v) {
               timer?.cancel();
               timer = Timer(const Duration(milliseconds: 400), () {
@@ -49,6 +59,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               IconButton(
                 tooltip: '清空',
                 onPressed: () {
+                  timer?.cancel();
                   query.clear();
                   setState(() => q = '');
                 },
@@ -63,13 +74,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                for (final e in const {
-                  'all': '全部',
-                  'discussion': '讨论',
-                  'project': '作品',
-                  'extension': '扩展',
-                  'user': '用户',
-                }.entries)
+                for (final e in {'all': '全部', ...kinds}.entries)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
@@ -85,88 +90,90 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         Expanded(
           child: q.isEmpty
               ? const EmptyState(title: '搜索感兴趣的内容', icon: Icons.search_rounded)
-              : AsyncPanel<dynamic>(
-                  cacheKey: '$q-$type',
-                  load: () => ref.read(apiProvider).get('/search', {
-                    'q': q,
-                    'type': type,
-                    'page': 1,
-                    'pageSize': 50,
-                  }),
-                  builder: (data) {
-                    final map = object(data);
-                    final children = <Widget>[];
-                    for (final kind in [
-                      'discussion',
-                      'project',
-                      'extension',
-                      'user',
-                    ]) {
-                      final key = '${kind}s';
-                      var rows = objects(
-                        map[key] is Map ? object(map[key])['items'] : map[key],
+              : PagedList(
+                  cacheKey: '$q:$type',
+                  emptyTitle: '没有找到相关内容',
+                  load: (page) async {
+                    final data = object(
+                      await ref.read(apiProvider).get('/search', {
+                        'q': q,
+                        'type': type,
+                        'page': page,
+                        'pageSize': 20,
+                      }),
+                    );
+                    final rows = <Json>[];
+                    var total = 0;
+                    for (final kind in kinds.keys) {
+                      if (type != 'all' && type != kind) continue;
+                      final group = object(data[kind]);
+                      final items = objects(
+                        data[kind] is List ? data[kind] : group['items'],
                       );
-                      if (rows.isEmpty && type == kind)
-                        rows = objects(data is List ? data : map['items']);
-                      if (rows.isEmpty) continue;
-                      children.add(
-                        SectionTitle(
-                          const {
-                            'discussion': '讨论',
-                            'project': '作品',
-                            'extension': '扩展',
-                            'user': '用户',
-                          }[kind]!,
-                        ),
-                      );
-                      for (final row in rows) {
-                        if (kind == 'user') {
-                          children.add(_MemberTile(Member(row)));
-                        } else if (kind == 'discussion') {
-                          children.add(
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: DiscussionCard(
-                                ContentItem(row, ContentKind.discussion),
-                                onTap: () =>
-                                    context.push('/discussion/${row['id']}'),
-                              ),
-                            ),
-                          );
-                        } else {
-                          children.add(
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: ListTile(
-                                leading: Icon(
-                                  kind == 'project'
-                                      ? Icons.widgets_outlined
-                                      : Icons.extension_outlined,
-                                ),
-                                title: Text(textOf(row['title'])),
-                                subtitle: Text(
-                                  textOf(row['summary']),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                onTap: () =>
-                                    context.push('/$kind/${row['id']}'),
-                              ),
-                            ),
-                          );
-                        }
-                      }
+                      rows.addAll(items.map((e) => {...e, '_kind': kind}));
+                      final count = intOf(group['total']);
+                      if (count > total) total = count;
                     }
-                    return children.isEmpty
-                        ? const EmptyState(
-                            title: '没有找到相关内容',
-                            icon: Icons.search_off_rounded,
-                          )
-                        : SingleChildScrollView(
-                            child: ReadingWidth(
-                              child: Column(children: children),
+                    return PageResult(
+                      rows,
+                      page: page,
+                      pageSize: 20,
+                      total: total,
+                    );
+                  },
+                  itemBuilder: (row, _) {
+                    final kind = textOf(row['_kind']);
+                    if (kind == 'users') return _MemberTile(Member(row));
+                    if (kind == 'discussions')
+                      return DiscussionCard(
+                        ContentItem(row, ContentKind.discussion),
+                        onTap: () => context.push('/discussion/${row['id']}'),
+                      );
+                    final post = kind == 'posts';
+                    final route = post
+                        ? '/discussion/${row['discussionId'] ?? object(row['discussion'])['id']}'
+                        : '/${kind == 'projects' ? 'project' : 'extension'}/${row['id']}';
+                    return SurfaceCard(
+                      onTap: () => context.push(route),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                post
+                                    ? Icons.chat_bubble_outline_rounded
+                                    : kind == 'projects'
+                                    ? Icons.widgets_outlined
+                                    : Icons.extension_outlined,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                kinds[kind] ?? '',
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            textOf(
+                              post
+                                  ? object(row['discussion'])['title']
+                                  : row['title'],
+                              post ? '讨论中的回复' : '',
                             ),
-                          );
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            textOf(post ? row['content'] : row['summary']),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    );
                   },
                 ),
         ),
