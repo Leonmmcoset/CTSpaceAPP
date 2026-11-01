@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../core/app_state.dart';
 import '../core/markdown_codec.dart';
 import '../core/models.dart';
+import '../core/storage.dart';
 import '../ui/forms.dart';
 import '../ui/platform.dart';
 import '../ui/widgets.dart';
@@ -51,7 +52,11 @@ class ComposerPage extends ConsumerStatefulWidget {
   ConsumerState<ComposerPage> createState() => _ComposerPageState();
 }
 
-class _ComposerPageState extends ConsumerState<ComposerPage> {
+class _ComposerPageState extends ConsumerState<ComposerPage>
+    with WidgetsBindingObserver {
+  late final LocalStore draftStore;
+  late final String draftOwner;
+  bool completed = false;
   final codec = MarkdownCodec();
   final title = TextEditingController(),
       summary = TextEditingController(),
@@ -88,9 +93,9 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
   bool get isExtension => request.kind == 'extension';
   bool get needsTitle =>
       ['discussion', 'project', 'extension'].contains(request.kind);
-  String get userId => ref.read(appProvider).user?.id ?? 'guest';
+  String get userId => draftOwner;
   String get draftKey =>
-      '${request.kind}_${request.id ?? request.discussionId ?? request.targetId ?? 'new'}';
+      '${request.kind}_${request.id ?? request.discussionId ?? request.targetId ?? 'new'}_${request.replyToId ?? request.parentId ?? ''}';
   String get markdown => sourceMode
       ? source.text
       : !changed
@@ -99,6 +104,9 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
   @override
   void initState() {
     super.initState();
+    draftStore = ref.read(storeProvider);
+    draftOwner = ref.read(appProvider).user?.id ?? 'guest';
+    WidgetsBinding.instance.addObserver(this);
     original = textOf(
       request.initial['content'] ?? request.initial['description'],
     );
@@ -137,8 +145,7 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
   }
 
   Future<void> _initialize() async {
-    final store = ref.read(storeProvider);
-    final draft = await store.readDraft(userId, draftKey);
+    final draft = await draftStore.readDraft(userId, draftKey);
     if (draft != null && mounted) {
       final restore = await confirm(context, '恢复未完成的草稿？', action: '恢复');
       if (restore && mounted) {
@@ -155,6 +162,9 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
         coverId = draft['coverId'] as String?;
         category = textOf(draft['category'], category);
         allowDownload = draft['allowDownload'] != false;
+        syncToForum = boolOf(draft['syncToForum']);
+        version.text = textOf(draft['versionLabel']);
+        changelog.text = textOf(draft['changelog']);
         attachments = (draft['attachments'] as List? ?? [])
             .map((e) => '$e')
             .toList();
@@ -163,6 +173,8 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
             .toList();
         publishedId = draft['publishedId'] as String?;
         poll = draft['poll'] == null ? null : object(draft['poll']);
+        baseline = jsonEncode(editor.document.toDelta().toJson());
+        changed = false;
       }
     }
     try {
@@ -180,14 +192,24 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
   void _scheduleDraft() {
     if (!ready || busy) return;
     draftTimer?.cancel();
-    draftTimer = Timer(const Duration(milliseconds: 700), () async {
-      try {
-        await ref.read(storeProvider).saveDraft(userId, draftKey, _draft());
-        if (mounted) setState(() => draftStatus = '草稿已保存');
-      } catch (_) {
-        if (mounted) setState(() => draftStatus = '草稿保存失败');
-      }
-    });
+    draftTimer = Timer(const Duration(milliseconds: 700), flushDraft);
+  }
+
+  Future<void> flushDraft() async {
+    if (!ready || completed) return;
+    draftTimer?.cancel();
+    final snapshot = _draft();
+    try {
+      await draftStore.saveDraft(userId, draftKey, snapshot);
+      if (mounted) setState(() => draftStatus = '草稿已保存');
+    } catch (_) {
+      if (mounted) setState(() => draftStatus = '草稿保存失败');
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) unawaited(flushDraft());
   }
 
   Json _draft() => {
@@ -199,6 +221,9 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
     'license': license.text,
     'category': category,
     'allowDownload': allowDownload,
+    'syncToForum': syncToForum,
+    'versionLabel': version.text,
+    'changelog': changelog.text,
     'fileId': fileId,
     'coverId': coverId,
     'attachments': attachments,
@@ -208,6 +233,8 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
   };
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(flushDraft());
     draftTimer?.cancel();
     uploadCancel?.cancel();
     editor.removeListener(_editorChanged);
@@ -317,15 +344,20 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
           final entry = type == 'image'
               ? '![](${resource.url})'
               : '[${resource.filename}](${resource.url})';
-          if (sourceMode)
+          if (sourceMode) {
             source.text += '\n$entry\n';
-          else
-            editor.replaceText(
-              editor.selection.baseOffset.clamp(0, editor.document.length - 1),
+          } else {
+            final offset = editor.selection.baseOffset.clamp(
               0,
-              '${resource.filename}\n',
-              null,
+              editor.document.length - 1,
             );
+            editor.replaceText(offset, 0, '${resource.filename}\n', null);
+            editor.formatText(
+              offset,
+              resource.filename.length,
+              LinkAttribute(resource.url),
+            );
+          }
         }
       }
       setState(() {});
@@ -452,7 +484,12 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
         await api.post('/polls', {'discussionId': publishedId, ...poll!});
         poll = null;
       }
-      await app.store.deleteDraft(userId, draftKey);
+      completed = true;
+      try {
+        await draftStore.deleteDraft(userId, draftKey);
+      } catch (_) {
+        /* Published content is already saved. */
+      }
       app.changed();
       if (mounted) context.pop(true);
     } catch (e) {
@@ -462,7 +499,11 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
               ? friendlyError(e)
               : '内容已保存，附件或投票未完成：${friendlyError(e)}',
         );
-      await app.store.saveDraft(userId, draftKey, _draft());
+      try {
+        await draftStore.saveDraft(userId, draftKey, _draft());
+      } catch (_) {
+        if (mounted) setState(() => draftStatus = '草稿保存失败');
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -810,7 +851,10 @@ class _ComposerPageState extends ConsumerState<ComposerPage> {
                             contentPadding: EdgeInsets.zero,
                             title: const Text('同步到论坛'),
                             value: syncToForum,
-                            onChanged: (v) => setState(() => syncToForum = v),
+                            onChanged: (v) {
+                              setState(() => syncToForum = v);
+                              _scheduleDraft();
+                            },
                           ),
                         if (request.id != null && fileId != null) ...[
                           TextField(
