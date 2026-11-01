@@ -6,23 +6,32 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:go_router/go_router.dart';
 import 'features/auth.dart';
 import 'features/policy.dart';
+import 'features/forum.dart';
+import 'features/composer.dart';
+import 'ui/platform.dart';
 import 'core/app_state.dart';
 import 'ui/theme.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     routes: [
+      GoRoute(path: '/', builder: (_, _) => const CommunityPage()),
       GoRoute(
-        path: '/',
-        builder: (context, state) => Scaffold(
-          appBar: AppBar(title: const Text('创客次元')),
-          body: Center(
-            child: FilledButton(
-              onPressed: () => context.push('/login'),
-              child: const Text('登录 / 注册'),
-            ),
-          ),
-        ),
+        path: '/discussion/:id',
+        builder: (_, s) => DiscussionPage(id: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/seq/:id',
+        builder: (_, s) =>
+            DiscussionPage(id: s.pathParameters['id']!, bySeq: true),
+      ),
+      GoRoute(
+        path: '/compose',
+        builder: (_, s) => ComposerPage(request: s.extra as ComposeRequest),
+      ),
+      GoRoute(
+        path: '/web',
+        builder: (_, s) => WebPage(url: s.uri.queryParameters['url'] ?? ''),
       ),
       GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterPage()),
