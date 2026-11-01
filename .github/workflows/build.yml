@@ -1,0 +1,132 @@
+name: 手动构建五端安装包
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manual-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.47.8'
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --release --split-per-abi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ctspace-android-apk
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 3
+          if-no-files-found: error
+
+  ios:
+    name: iOS 未签名 IPA
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+      - name: 打包未签名 IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          ct_ios_directory="$RUNNER_TEMP/ctspace-ios"
+          mkdir -p "$ct_ios_directory/Payload"
+          ditto build/ios/iphoneos/Runner.app "$ct_ios_directory/Payload/Runner.app"
+          cd "$ct_ios_directory"
+          zip -qr "$GITHUB_WORKSPACE/ctspace-ios-unsigned.ipa" Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ctspace-ios-unsigned-ipa
+          path: ctspace-ios-unsigned.ipa
+          retention-days: 3
+          if-no-files-found: error
+
+  macos:
+    name: macOS App
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build macos --release
+      - name: 打包 macOS App
+        run: ditto -c -k --sequesterRsrc --keepParent 'build/macos/Build/Products/Release/创客次元.app' ctspace-macos.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ctspace-macos
+          path: ctspace-macos.zip
+          retention-days: 3
+          if-no-files-found: error
+
+  windows:
+    name: Windows x64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: 打包 Windows 程序
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath ctspace-windows-x64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ctspace-windows-x64
+          path: ctspace-windows-x64.zip
+          retention-days: 3
+          if-no-files-found: error
+
+  linux:
+    name: Linux x64
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - name: 打包 Linux 程序
+        run: tar -C build/linux/x64/release/bundle -czf ctspace-linux-x64.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ctspace-linux-x64
+          path: ctspace-linux-x64.tar.gz
+          retention-days: 3
+          if-no-files-found: error
