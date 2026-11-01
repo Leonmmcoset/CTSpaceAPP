@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +10,12 @@ import 'package:forum/core/app_state.dart';
 import 'package:forum/core/storage.dart';
 import 'package:forum/core/models.dart';
 import 'package:forum/features/composer.dart';
+import 'package:forum/features/discover.dart';
+import 'package:forum/features/forum.dart';
+import 'package:forum/features/gallery.dart';
+import 'package:forum/features/messages.dart';
+import 'package:forum/features/social.dart';
+import 'package:forum/ui/navigation.dart';
 import 'package:forum/ui/shell.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -121,6 +127,111 @@ launch(WidgetTester tester, Size size, {LocalStore? localStore}) async {
 }
 
 void main() {
+  const tabPages = [
+    CommunityPage,
+    GalleryPage,
+    DiscoverPage,
+    MessagesPage,
+    MePage,
+  ];
+
+  testWidgets(
+    'bottom tabs follow their spatial order',
+    (tester) async {
+      final setup = await launch(tester, const Size(390, 844));
+      final navigation = find.byType(NavigationBar);
+      final navigationOrigin = tester.getTopLeft(navigation);
+      var previous = 0;
+      for (final next in [1, 4, 3, 2, 0]) {
+        await tester.tap(
+          find.descendant(
+            of: navigation,
+            matching: find.text(destinations[next].label),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        final page = find.byType(tabPages[next]);
+        final during = tester.getTopLeft(page);
+        expect(tester.getTopLeft(navigation), navigationOrigin);
+        await tester.pumpAndSettle();
+        final settled = tester.getTopLeft(page);
+        expect(
+          (during.dx - settled.dx) * next.compareTo(previous),
+          greaterThan(1),
+          reason:
+              '${destinations[previous].label} → ${destinations[next].label}',
+        );
+        expect(during.dy, closeTo(settled.dy, .01));
+        expect(tester.widget<NavigationBar>(navigation).selectedIndex, next);
+        previous = next;
+      }
+      await tester.tap(
+        find.descendant(of: navigation, matching: find.text('社区')),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.getTopLeft(find.byType(CommunityPage)).dx, closeTo(0, .01));
+      expect(tester.takeException(), isNull);
+      expect(setup.transport.writes, 0);
+      await tester.pumpWidget(const SizedBox());
+    },
+    variant: TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
+
+  testWidgets('rapid tab changes settle on the last selected destination', (
+    tester,
+  ) async {
+    final setup = await launch(tester, const Size(390, 844));
+    for (final next in [4, 1, 3, 0, 2]) {
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text(destinations[next].label),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      2,
+    );
+    expect(tester.getTopLeft(find.byType(DiscoverPage)).dx, closeTo(0, .01));
+    expect(tester.takeException(), isNull);
+    expect(setup.transport.writes, 0);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('bottom tabs skip sliding when reduced motion is enabled', (
+    tester,
+  ) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    final setup = await launch(tester, const Size(390, 844));
+    for (final next in [4, 0, 2]) {
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text(destinations[next].label),
+        ),
+      );
+      await tester.pump();
+      expect(
+        tester.getTopLeft(find.byType(tabPages[next])).dx,
+        closeTo(0, .01),
+      );
+      await tester.pumpAndSettle();
+    }
+    expect(tester.takeException(), isNull);
+    expect(setup.transport.writes, 0);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets(
     'phone navigation reaches Chinese feature screens without overflow',
     (tester) async {

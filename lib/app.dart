@@ -21,6 +21,7 @@ import 'features/library.dart';
 import 'features/support.dart';
 import 'features/decoration.dart';
 import 'ui/shell.dart';
+import 'ui/navigation.dart';
 import 'core/models.dart';
 import 'features/composer.dart';
 import 'ui/platform.dart';
@@ -58,9 +59,17 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/decoration',
             builder: (_, _) => const DecorationPage(),
           ),
-          GoRoute(path: '/discover', builder: (_, _) => const DiscoverPage()),
+          GoRoute(
+            path: '/discover',
+            pageBuilder: (context, state) =>
+                destinationPage(context, state, const DiscoverPage()),
+          ),
           GoRoute(path: '/finance', builder: (_, _) => const FinancePage()),
-          GoRoute(path: '/', builder: (_, _) => const CommunityPage()),
+          GoRoute(
+            path: '/',
+            pageBuilder: (context, state) =>
+                destinationPage(context, state, const CommunityPage()),
+          ),
           GoRoute(
             path: '/discussion/:id',
             builder: (_, s) => DiscussionPage(id: s.pathParameters['id']!),
@@ -70,7 +79,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, s) =>
                 DiscussionPage(id: s.pathParameters['id']!, bySeq: true),
           ),
-          GoRoute(path: '/gallery', builder: (_, _) => const GalleryPage()),
+          GoRoute(
+            path: '/gallery',
+            pageBuilder: (context, state) =>
+                destinationPage(context, state, const GalleryPage()),
+          ),
           GoRoute(
             path: '/my-creations',
             builder: (_, _) => const GalleryPage(mine: true),
@@ -89,7 +102,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               kind: ContentKind.extension,
             ),
           ),
-          GoRoute(path: '/me', builder: (_, _) => const MePage()),
+          GoRoute(
+            path: '/me',
+            pageBuilder: (context, state) =>
+                destinationPage(context, state, const MePage()),
+          ),
           GoRoute(path: '/search', builder: (_, _) => const SearchPage()),
           GoRoute(path: '/tags', builder: (_, _) => const TagsPage()),
           GoRoute(
@@ -141,8 +158,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/addresses', builder: (_, _) => const AddressesPage()),
           GoRoute(
             path: '/messages',
-            builder: (_, s) =>
-                MessagesPage(userId: s.uri.queryParameters['user']),
+            pageBuilder: (context, state) => destinationPage(
+              context,
+              state,
+              MessagesPage(userId: state.uri.queryParameters['user']),
+            ),
           ),
           GoRoute(path: '/friends', builder: (_, _) => const FriendsPage()),
           GoRoute(

@@ -8,40 +8,7 @@ import '../core/app_state.dart';
 import '../core/models.dart';
 import 'widgets.dart';
 import 'theme.dart';
-
-const destinations =
-    <({String label, String path, IconData icon, IconData active})>[
-      (
-        label: '社区',
-        path: '/',
-        icon: Icons.forum_outlined,
-        active: Icons.forum_rounded,
-      ),
-      (
-        label: '广场',
-        path: '/gallery',
-        icon: Icons.widgets_outlined,
-        active: Icons.widgets_rounded,
-      ),
-      (
-        label: '发现',
-        path: '/discover',
-        icon: Icons.explore_outlined,
-        active: Icons.explore_rounded,
-      ),
-      (
-        label: '消息',
-        path: '/messages',
-        icon: Icons.chat_bubble_outline_rounded,
-        active: Icons.chat_bubble_rounded,
-      ),
-      (
-        label: '我的',
-        path: '/me',
-        icon: Icons.person_outline_rounded,
-        active: Icons.person_rounded,
-      ),
-    ];
+import 'navigation.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.child, required this.location});
@@ -393,7 +360,13 @@ class _AppShellState extends ConsumerState<AppShell>
                       : const BorderRadius.only(topLeft: Radius.circular(28)),
                   child: ColoredBox(
                     color: scheme.surface,
-                    child: PageStorage(bucket: bucket, child: widget.child),
+                    child: PageStorage(
+                      bucket: bucket,
+                      child: DestinationTransitions(
+                        location: widget.location,
+                        child: widget.child,
+                      ),
+                    ),
                   ),
                 ),
               ),
