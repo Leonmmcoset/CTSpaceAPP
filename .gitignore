@@ -1,0 +1,30 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+build/
+coverage/
+*.log
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+# Local secrets and signing
+.env
+.env.*
+android/local.properties
+android/key.properties
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+# Generated local platform files
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+macos/Pods/
+macos/Flutter/ephemeral/
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
