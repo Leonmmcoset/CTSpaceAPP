@@ -15,6 +15,7 @@ import 'features/developer.dart';
 import 'features/shop.dart';
 import 'features/messages.dart';
 import 'features/origmark.dart';
+import 'features/live.dart';
 import 'core/models.dart';
 import 'features/composer.dart';
 import 'ui/platform.dart';
@@ -117,6 +118,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/groups/:id',
         builder: (_, s) => GroupPage(id: s.pathParameters['id']!),
       ),
+      GoRoute(path: '/live', builder: (_, _) => const LivePage()),
       GoRoute(path: '/origmark', builder: (_, _) => const OrigMarkPage()),
       GoRoute(
         path: '/origmark/registration/:id',
