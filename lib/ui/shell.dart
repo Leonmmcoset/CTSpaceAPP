@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -100,9 +101,13 @@ class _AppShellState extends ConsumerState<AppShell>
     }
     if (tick++ % 4 == 0 && !const bool.fromEnvironment('READ_ONLY_SMOKE')) {
       try {
-        await app.api.post('/presence/heartbeat', {
-          'guestToken': app.store.prefs.getString('guestToken'),
-        });
+        var guestToken = app.store.prefs.getString('guestToken');
+        if (guestToken == null) {
+          guestToken =
+              'g_${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}_${math.Random.secure().nextInt(0x7fffffff).toRadixString(36)}';
+          await app.store.prefs.setString('guestToken', guestToken);
+        }
+        await app.api.post('/presence/heartbeat', {'guestToken': guestToken});
       } catch (_) {}
     }
   }
