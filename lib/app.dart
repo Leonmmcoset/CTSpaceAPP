@@ -17,6 +17,7 @@ import 'features/messages.dart';
 import 'features/origmark.dart';
 import 'features/live.dart';
 import 'features/discover.dart';
+import 'features/library.dart';
 import 'ui/shell.dart';
 import 'core/models.dart';
 import 'features/composer.dart';
@@ -31,6 +32,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state, child) =>
             AppShell(location: state.uri.path, child: child),
         routes: [
+          GoRoute(path: '/assets', builder: (_, _) => const LibraryPage()),
+          GoRoute(
+            path: '/assets/:id',
+            builder: (_, s) => LibraryDetailPage(id: s.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/games',
+            builder: (_, _) => const LibraryPage(games: true),
+          ),
+          GoRoute(
+            path: '/games/:id',
+            builder: (_, s) =>
+                LibraryDetailPage(id: s.pathParameters['id']!, games: true),
+          ),
+          
+          
+          
           GoRoute(path: '/discover', builder: (_, _) => const DiscoverPage()),
           GoRoute(path: '/finance', builder: (_, _) => const FinancePage()),
           GoRoute(path: '/', builder: (_, _) => const CommunityPage()),

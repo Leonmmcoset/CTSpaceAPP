@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../core/api.dart';
 import '../core/app_state.dart';
 import '../core/models.dart';
-import '../ui/platform.dart';
 import '../ui/widgets.dart';
+import '../core/api.dart';
+import '../ui/platform.dart';
 
 class DiscoverPage extends ConsumerWidget {
   const DiscoverPage({super.key});
@@ -165,14 +165,12 @@ class DiscoverPage extends ConsumerWidget {
                 (
                   '素材库',
                   Icons.perm_media_outlined,
-                  () =>
-                      openLink(context, absoluteUrl('/assets'), external: true),
+                  () => context.push('/assets'),
                 ),
                 (
                   '小游戏',
                   Icons.sports_esports_outlined,
-                  () =>
-                      openLink(context, absoluteUrl('/games'), external: true),
+                  () => context.push('/games'),
                 ),
                 (
                   '更新日志',
