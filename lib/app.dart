@@ -18,6 +18,7 @@ import 'features/origmark.dart';
 import 'features/live.dart';
 import 'features/discover.dart';
 import 'features/library.dart';
+import 'features/support.dart';
 import 'ui/shell.dart';
 import 'core/models.dart';
 import 'features/composer.dart';
@@ -46,8 +47,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, s) =>
                 LibraryDetailPage(id: s.pathParameters['id']!, games: true),
           ),
-          
-          
+          GoRoute(path: '/support', builder: (_, _) => const SupportPage()),
+          GoRoute(
+            path: '/support/:id',
+            builder: (_, s) =>
+                SupportConversationPage(id: s.pathParameters['id']!),
+          ),
           
           GoRoute(path: '/discover', builder: (_, _) => const DiscoverPage()),
           GoRoute(path: '/finance', builder: (_, _) => const FinancePage()),

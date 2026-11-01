@@ -4,8 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../core/app_state.dart';
 import '../core/models.dart';
 import '../ui/widgets.dart';
-import '../core/api.dart';
-import '../ui/platform.dart';
 
 class DiscoverPage extends ConsumerWidget {
   const DiscoverPage({super.key});
@@ -160,7 +158,7 @@ class DiscoverPage extends ConsumerWidget {
                 (
                   '客服',
                   Icons.support_agent_rounded,
-                  () => openLink(context, absoluteUrl('/chat'), external: true),
+                  () => context.push('/support'),
                 ),
                 (
                   '素材库',
