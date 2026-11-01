@@ -58,7 +58,11 @@ class CaptchaInputState extends ConsumerState<CaptchaInput> {
       if (mounted && stamp == generation) setState(() => nonce = solution);
     } catch (e) {
       if (mounted && stamp == generation)
-        setState(() => error = friendlyError(e));
+        setState(() {
+          error = friendlyError(e);
+          captcha = null;
+          nonce = null;
+        });
     }
   }
 
@@ -152,12 +156,35 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       error = null;
     });
     try {
-      await ref.read(appProvider).signIn({
+      final app = ref.read(appProvider);
+      final challenge = await app.signIn({
         'username': username.text.trim(),
         'password': password.text,
         ...proof.toJson(),
       });
-      if (mounted) context.pop(true);
+      if (challenge != null) {
+        if (!mounted) return;
+        final response = await showFields(
+          context,
+          '安全验证',
+          [
+            FieldSpec(
+              'answer',
+              textOf(challenge['question'], '安全问题'),
+              secret: true,
+            ),
+          ],
+          submitLabel: '登录',
+          onSubmit: (data) async {
+            await app.answerSecurity(
+              textOf(challenge['ticket']),
+              textOf(data['answer']),
+            );
+          },
+        );
+        if (response == null) return;
+      }
+      if (mounted && app.signedIn) context.pop(true);
     } catch (e) {
       if (mounted) {
         setState(() => error = friendlyError(e));

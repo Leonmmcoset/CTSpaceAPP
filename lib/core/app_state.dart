@@ -66,8 +66,24 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> signIn(Json credentials) async {
+  Future<Json?> signIn(Json credentials) async {
     final result = object(await api.post('/auth/login', credentials));
+    if (result['needSecurityAnswer'] == true) return result;
+    await acceptSession(result);
+    return null;
+  }
+
+  Future<void> answerSecurity(String ticket, String answer) async {
+    final result = object(
+      await api.post('/auth/login/security', {
+        'ticket': ticket,
+        'answer': answer,
+      }),
+    );
+    await acceptSession(result);
+  }
+
+  Future<void> acceptSession(Json result) async {
     final token = textOf(result['token']);
     if (token.isEmpty) throw const ApiFailure('登录响应异常，请重试');
     try {
@@ -76,7 +92,7 @@ class AppState extends ChangeNotifier {
       throw const ApiFailure('系统安全存储不可用，无法保存登录状态');
     }
     api.token = token;
-    user = Member(object(result['user']));
+    user = Member(result['user'] is Map ? object(result['user']) : result);
     sessionError = null;
     changed();
   }
