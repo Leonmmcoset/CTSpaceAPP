@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 import 'core/app_state.dart';
@@ -8,6 +10,14 @@ import 'app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks([
+      '创客次元',
+    ], await rootBundle.loadString('assets/licenses/Apache-2.0.txt'));
+    yield LicenseEntryWithLineBreaks([
+      'Noto Sans SC',
+    ], await rootBundle.loadString('assets/licenses/NotoSansSC-OFL.txt'));
+  });
   final store = await LocalStore.open();
   if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
     await windowManager.ensureInitialized();
